@@ -7,9 +7,18 @@ import { usePlantMembers, PlantMember } from '@/hooks/usePlantMembers'
 interface CareTeamProps {
   plantId: string
   currentUserId?: string
+  plantName?: string
+  currentUserName?: string
+  currentUserEmail?: string
 }
 
-export default function CareTeam({ plantId, currentUserId }: CareTeamProps) {
+export default function CareTeam({ 
+  plantId, 
+  currentUserId, 
+  plantName = 'Your Plant',
+  currentUserName = 'A friend',
+  currentUserEmail = 'friend@example.com'
+}: CareTeamProps) {
   const { 
     members, 
     loading, 
@@ -27,10 +36,39 @@ export default function CareTeam({ plantId, currentUserId }: CareTeamProps) {
   const handleInviteMember = async () => {
     if (!inviteEmail.trim()) return
 
-    const member = await addMember(inviteEmail.trim())
-    if (member) {
-      setInviteEmail('')
-      setIsInviting(false)
+    try {
+      // First add the member to the database
+      const member = await addMember(inviteEmail.trim())
+      if (member) {
+        // Send email invitation
+        const response = await fetch('/api/send-invitation', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: inviteEmail.trim(),
+            plantName: plantName,
+            inviterName: currentUserName,
+            inviterEmail: currentUserEmail
+          }),
+        })
+
+        if (response.ok) {
+          const result = await response.json()
+          console.log('Email invitation sent:', result.message)
+          alert('Invitation sent successfully! 🌱')
+        } else {
+          console.error('Failed to send email invitation')
+          alert('Member added but email invitation failed to send.')
+        }
+
+        setInviteEmail('')
+        setIsInviting(false)
+      }
+    } catch (error) {
+      console.error('Error inviting member:', error)
+      alert('Failed to send invitation. Please try again.')
     }
   }
 

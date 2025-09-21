@@ -269,7 +269,13 @@ export default function Home() {
             <div className="space-y-6">
               {/* Bloom Buddies */}
               {currentPlant && (
-                <CareTeam plantId={currentPlant.id} currentUserId={user?.id} />
+                <CareTeam 
+                  plantId={currentPlant.id} 
+                  currentUserId={user?.id}
+                  plantName={currentPlant.name}
+                  currentUserName={user?.user_metadata?.name || user?.email?.split('@')[0] || 'A friend'}
+                  currentUserEmail={user?.email}
+                />
               )}
               
               {/* Care History */}

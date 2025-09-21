@@ -38,7 +38,7 @@ export function usePlants() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // Fetch all plants for the current user
+   // Fetch all plants for the current user
   const fetchPlants = async () => {
     try {
       setLoading(true)
