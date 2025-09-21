@@ -248,7 +248,7 @@ export function usePlants() {
       }
 
       const data = await response.json()
-      const updatedPlant = data
+      const updatedPlant = data.plant
 
       setPlants(prev => prev.map(plant => 
         plant.id === plantId ? updatedPlant : plant

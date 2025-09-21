@@ -111,8 +111,8 @@ export default function SproutyMonster({ plantData }: SproutyMonsterProps) {
             }`}
           >
             <svg
-              width={getPlantSize()}
-              height={getPlantSize()}
+              width={getPlantSize().toString()}
+              height={getPlantSize().toString()}
               viewBox="0 0 120 120"
               className="transition-all duration-500"
             >

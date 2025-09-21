@@ -23,15 +23,26 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Check if user has access to this plant
-    const { data: member, error: memberError } = await supabase
+    // Check if user has access to this plant (owner or member)
+    const { data: plant, error: plantError } = await supabase
+      .from('plants')
+      .select('owner_id')
+      .eq('id', plantId)
+      .single()
+
+    if (plantError || !plant) {
+      return NextResponse.json({ error: 'Plant not found' }, { status: 404 })
+    }
+
+    // Check if user is owner or member
+    const { data: member } = await supabase
       .from('plant_members')
       .select('id')
       .eq('plant_id', plantId)
       .eq('user_id', user.id)
       .single()
 
-    if (memberError) {
+    if (plant.owner_id !== user.id && !member) {
       return NextResponse.json({ error: 'Access denied to this plant' }, { status: 403 })
     }
 
