@@ -1,6 +1,7 @@
 "use client"
 
-import { Droplets, Utensils, Gamepad2, Clock } from 'lucide-react'
+import { useEffect, useRef } from 'react'
+import { Droplets, Utensils, Gamepad2, Clock, RefreshCw } from 'lucide-react'
 import { usePlantMembers, CareAction } from '@/hooks/usePlantMembers'
 
 interface CareHistoryProps {
@@ -8,7 +9,31 @@ interface CareHistoryProps {
 }
 
 export default function CareHistory({ plantId }: CareHistoryProps) {
-  const { careHistory, loading, error } = usePlantMembers(plantId)
+  const { careHistory, loading, error, fetchCareHistory } = usePlantMembers(plantId)
+  const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null)
+
+  // Auto-refresh care history every 5 seconds
+  useEffect(() => {
+    if (plantId) {
+      // Clear any existing interval
+      if (refreshIntervalRef.current) {
+        clearInterval(refreshIntervalRef.current)
+      }
+      
+      // Set up new interval
+      refreshIntervalRef.current = setInterval(() => {
+        fetchCareHistory()
+      }, 1000) // Refresh every 1 second
+    }
+
+    // Cleanup interval on unmount or plantId change
+    return () => {
+      if (refreshIntervalRef.current) {
+        clearInterval(refreshIntervalRef.current)
+        refreshIntervalRef.current = null
+      }
+    }
+  }, [plantId, fetchCareHistory])
 
   const getActionIcon = (action: string) => {
     switch (action) {
@@ -69,7 +94,17 @@ export default function CareHistory({ plantId }: CareHistoryProps) {
 
   return (
     <div className="bg-white/60 backdrop-blur-sm rounded-2xl shadow-lg p-6">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">Care History</h3>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold text-gray-900">Care History</h3>
+        <button
+          onClick={fetchCareHistory}
+          className="flex items-center space-x-1 px-2 py-1 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+          title="Refresh care history"
+        >
+          <RefreshCw className="w-4 h-4" />
+          <span>Refresh</span>
+        </button>
+      </div>
       
       {error && (
         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
