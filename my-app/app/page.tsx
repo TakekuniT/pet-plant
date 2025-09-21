@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect } from "react"
 import { Sprout, Heart, Droplets, Zap, Moon, LogOut, Settings, Plus } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import Auth from "./components/Auth"
@@ -15,7 +15,6 @@ export default function Home() {
   const [user, setUser] = useState<{ id: string; email?: string; user_metadata?: { name?: string } } | null>(null)
   const [loading, setLoading] = useState(true)
   const [showPlantManager, setShowPlantManager] = useState(false)
-  const hasRefreshed = useRef(false)
   const { 
     plants, 
     currentPlant, 
@@ -43,11 +42,19 @@ export default function Home() {
       setLoading(false)
       
       // Refresh the page when user signs in to ensure everything loads properly
-      // Only refresh once to prevent infinite loops
-      if (event === 'SIGNED_IN' && session?.user && !hasRefreshed.current) {
-        console.log('User signed in, refreshing page...')
-        hasRefreshed.current = true
-        window.location.reload()
+      // Only refresh once per session to prevent infinite loops
+      if (event === 'SIGNED_IN' && session?.user) {
+        const hasRefreshed = sessionStorage.getItem('hasRefreshedOnSignIn')
+        if (!hasRefreshed) {
+          console.log('User signed in, refreshing page...')
+          sessionStorage.setItem('hasRefreshedOnSignIn', 'true')
+          window.location.reload()
+        }
+      }
+      
+      // Clear the refresh flag when user signs out
+      if (event === 'SIGNED_OUT') {
+        sessionStorage.removeItem('hasRefreshedOnSignIn')
       }
     })
 
