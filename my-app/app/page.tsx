@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Sprout, Users, History, Heart, Droplets, Zap, Moon } from "lucide-react"
-import PlantMonster from "./components/PlantMonster"
+import SproutyMonster from "./components/SproutyMonster"
 import CarePanel from "./components/CarePanel"
 import FriendsList from "./components/FriendsList"
 import CareHistory from "./components/CareHistory"
@@ -170,7 +170,7 @@ export default function Home() {
                 </div>
               </div>
               
-              <PlantMonster plantData={plantData} />
+              <SproutyMonster plantData={plantData} />
               
               <CarePanel plantData={plantData} onCare={handleCare} />
             </div>
