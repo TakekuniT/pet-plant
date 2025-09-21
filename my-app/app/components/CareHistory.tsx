@@ -12,7 +12,7 @@ export default function CareHistory({ plantId }: CareHistoryProps) {
   const { careHistory, loading, error, fetchCareHistory } = usePlantMembers(plantId)
   const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Auto-refresh care history every 5 seconds
+  // Auto-refresh care history every 1 second
   useEffect(() => {
     if (plantId) {
       // Clear any existing interval
@@ -24,6 +24,12 @@ export default function CareHistory({ plantId }: CareHistoryProps) {
       refreshIntervalRef.current = setInterval(() => {
         fetchCareHistory()
       }, 1000) // Refresh every 1 second
+    } else {
+      // Clear interval if no plantId
+      if (refreshIntervalRef.current) {
+        clearInterval(refreshIntervalRef.current)
+        refreshIntervalRef.current = null
+      }
     }
 
     // Cleanup interval on unmount or plantId change
@@ -80,6 +86,10 @@ export default function CareHistory({ plantId }: CareHistoryProps) {
     }
   }
 
+  if (!plantId) {
+    return null
+  }
+
   if (loading) {
     return (
       <div className="bg-white/60 backdrop-blur-sm rounded-2xl shadow-lg p-6">
@@ -96,14 +106,14 @@ export default function CareHistory({ plantId }: CareHistoryProps) {
     <div className="bg-white/60 backdrop-blur-sm rounded-2xl shadow-lg p-6">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-gray-900">Care History</h3>
-        <button
-          onClick={fetchCareHistory}
-          className="flex items-center space-x-1 px-2 py-1 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors duration-200"
-          title="Refresh care history"
-        >
-          <RefreshCw className="w-4 h-4" />
-          <span>Refresh</span>
-        </button>
+            <button
+              onClick={fetchCareHistory}
+              className="flex items-center space-x-1 px-2 py-1 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+              title="Refresh care history"
+            >
+              <RefreshCw className="w-4 h-4" />
+              <span>Refresh</span>
+            </button>
       </div>
       
       {error && (
@@ -127,20 +137,20 @@ export default function CareHistory({ plantId }: CareHistoryProps) {
                     {action.action}
                   </span>
                 </div>
-                <p className="text-sm text-gray-600">{formatTimeAgo(action.created_at)}</p>
+                    <p className="text-sm text-gray-700">{formatTimeAgo(action.created_at)}</p>
               </div>
             </div>
           </div>
         ))}
       </div>
 
-      {careHistory.length === 0 && (
-        <div className="text-center py-8">
-          <Clock className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-          <p className="text-gray-600">No care actions yet</p>
-          <p className="text-sm text-gray-500">Start caring for your plant to see history!</p>
-        </div>
-      )}
+          {careHistory.length === 0 && (
+            <div className="text-center py-8">
+              <Clock className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+              <p className="text-gray-700">No care actions yet</p>
+              <p className="text-sm text-gray-600">Start caring for your plant to see history!</p>
+            </div>
+          )}
     </div>
   )
 }

@@ -54,7 +54,7 @@ export default function CareTeam({ plantId, currentUserId }: CareTeamProps) {
       case 'admin':
         return <Shield className="w-4 h-4 text-blue-500" />
       default:
-        return <User className="w-4 h-4 text-gray-500" />
+        return <User className="w-4 h-4 text-gray-600" />
     }
   }
 
@@ -65,7 +65,7 @@ export default function CareTeam({ plantId, currentUserId }: CareTeamProps) {
       case 'admin':
         return 'bg-blue-100 text-blue-800 border-blue-200'
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200'
+        return 'bg-gray-100 text-gray-700 border-gray-300'
     }
   }
 
@@ -82,6 +82,17 @@ export default function CareTeam({ plantId, currentUserId }: CareTeamProps) {
     if (member.users.id === currentUserId) return true
     
     return false
+  }
+
+  // Debug: Log member management permissions
+  console.log('CareTeam Debug:', {
+    currentUserId,
+    members: members.map(m => ({ id: m.users.id, name: m.users.name, role: m.role })),
+    canManage: members.map(m => ({ name: m.users.name, canManage: canManageMembers(m) }))
+  })
+
+  if (!plantId) {
+    return null
   }
 
   if (loading) {
@@ -135,7 +146,7 @@ export default function CareTeam({ plantId, currentUserId }: CareTeamProps) {
                 value={inviteEmail}
                 onChange={(e) => setInviteEmail(e.target.value)}
                 placeholder="Enter friend's email"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent placeholder-gray-700 text-gray-900"
               />
             </div>
             <button
@@ -160,53 +171,55 @@ export default function CareTeam({ plantId, currentUserId }: CareTeamProps) {
       {/* Members List */}
       <div className="space-y-3">
         {members.map((member) => (
-          <div key={member.id} className="flex items-center justify-between p-3 bg-white/50 rounded-lg border border-gray-200">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center text-white font-medium">
-                {member.users.name.charAt(0).toUpperCase()}
-              </div>
-              <div>
-                <div className="flex items-center space-x-2">
-                  <h4 className="font-medium text-gray-900">{member.users.name}</h4>
-                  {getRoleIcon(member.role)}
+          <div key={member.id} className="p-3 bg-white/50 rounded-lg border border-gray-200">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center text-white font-medium">
+                  {member.users.name.charAt(0).toUpperCase()}
                 </div>
-                <p className="text-sm text-gray-600">{member.users.email}</p>
-                <p className="text-xs text-gray-500">
-                  Joined {new Date(member.joined_at).toLocaleDateString()}
-                </p>
+                <div>
+                  <div className="flex items-center space-x-2">
+                    <h4 className="font-medium text-gray-900">{member.users.name}</h4>
+                    {getRoleIcon(member.role)}
+                  </div>
+                  <p className="text-sm text-gray-700">{member.users.email}</p>
+                  <p className="text-xs text-gray-600">
+                    Joined {new Date(member.joined_at).toLocaleDateString()}
+                  </p>
+                </div>
               </div>
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <span className={`px-2 py-1 text-xs font-medium rounded-full border ${getRoleColor(member.role)}`}>
-                {member.role}
-              </span>
               
-              {canManageMembers(member) && (
-                <div className="flex items-center space-x-1">
-                  {member.role !== 'owner' && (
-                    <button
-                      onClick={() => {
-                        setEditingMember(member)
-                        setNewRole(member.role === 'admin' ? 'member' : 'admin')
-                      }}
-                      className="p-1 text-gray-500 hover:text-blue-600 transition-colors duration-200"
-                      title="Change role"
-                    >
-                      <Edit3 className="w-4 h-4" />
-                    </button>
-                  )}
-                  {member.users.id !== currentUserId && (
-                    <button
-                      onClick={() => handleRemoveMember(member)}
-                      className="p-1 text-gray-500 hover:text-red-600 transition-colors duration-200"
-                      title="Remove member"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  )}
-                </div>
-              )}
+              <div className="flex items-center space-x-2">
+                <span className={`px-2 py-1 text-xs font-medium rounded-full border ${getRoleColor(member.role)}`}>
+                  {member.role}
+                </span>
+                
+                {canManageMembers(member) && (
+                  <div className="flex items-center space-x-1">
+                    {member.role !== 'owner' && (
+                      <button
+                        onClick={() => {
+                          setEditingMember(member)
+                          setNewRole(member.role === 'admin' ? 'member' : 'admin')
+                        }}
+                        className="p-1.5 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors duration-200"
+                        title="Change role"
+                      >
+                        <Edit3 className="w-4 h-4" />
+                      </button>
+                    )}
+                    {member.users.id !== currentUserId && (
+                      <button
+                        onClick={() => handleRemoveMember(member)}
+                        className="p-1.5 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded transition-colors duration-200"
+                        title="Remove member"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         ))}
@@ -254,13 +267,13 @@ export default function CareTeam({ plantId, currentUserId }: CareTeamProps) {
         </div>
       )}
 
-      {members.length === 0 && (
-        <div className="text-center py-8">
-          <Users className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-          <p className="text-gray-600">No care team members yet</p>
-          <p className="text-sm text-gray-500">Invite friends to help care for your plant!</p>
-        </div>
-      )}
+          {members.length === 0 && (
+            <div className="text-center py-8">
+              <Users className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+              <p className="text-gray-700">No care team members yet</p>
+              <p className="text-sm text-gray-600">Invite friends to help care for your plant!</p>
+            </div>
+          )}
     </div>
   )
 }

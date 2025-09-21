@@ -54,6 +54,21 @@ export function usePlants() {
     }
   }, [])
 
+  // Clear plants when user signs out (but not on token refresh)
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT') {
+        // Only clear plants when user actually signs out
+        setPlants([])
+        setCurrentPlant(null)
+        localStorage.removeItem('plants')
+        localStorage.removeItem('currentPlant')
+      }
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
+
   // Save plants to localStorage whenever plants change (but not on initial load)
   useEffect(() => {
     if (plants.length > 0) {
