@@ -1,14 +1,19 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Sprout, Users, History, Heart, Droplets, Zap, Moon } from "lucide-react"
+import { Sprout, Users, History, Heart, Droplets, Zap, Moon, LogOut } from "lucide-react"
+import { supabase } from "@/lib/supabase"
+import Auth from "./components/Auth"
 import SproutyMonster from "./components/SproutyMonster"
 import CarePanel from "./components/CarePanel"
 import FriendsList from "./components/FriendsList"
 import CareHistory from "./components/CareHistory"
 
 export default function Home() {
+  const [user, setUser] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
   const [plantData, setPlantData] = useState({
+    id: null,
     name: "Sprouty",
     health: 80,
     happiness: 75,
@@ -33,7 +38,95 @@ export default function Home() {
     { id: 4, friend: "You", action: "watered", time: "3 hours ago", emoji: "water" }
   ])
 
-  // Simulate plant needs over time
+  // Check authentication status
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      setUser(user)
+      setLoading(false)
+    }
+    getUser()
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user ?? null)
+      setLoading(false)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
+
+  const loadPlantData = async () => {
+    if (!user) return
+    
+    try {
+      // Get user's plants
+      const { data: plants, error } = await supabase
+        .from('plants')
+        .select('*')
+        .eq('owner_id', user.id)
+        .limit(1)
+
+      if (error) throw error
+
+      if (plants && plants.length > 0) {
+        const plant = plants[0]
+        setPlantData({
+          id: plant.id,
+          name: plant.name,
+          health: plant.health,
+          happiness: plant.happiness,
+          growth: plant.growth,
+          lastWatered: new Date(plant.last_watered).getTime(),
+          lastFed: new Date(plant.last_fed).getTime(),
+          lastPlayed: new Date(plant.last_played).getTime(),
+          stage: plant.stage,
+          mood: plant.mood
+        })
+      } else {
+        // Create a new plant for the user
+        await createNewPlant()
+      }
+    } catch (error) {
+      console.error('Error loading plant data:', error)
+    }
+  }
+
+  const createNewPlant = async () => {
+    if (!user) return
+    
+    try {
+      const { data: plant, error } = await supabase
+        .from('plants')
+        .insert({
+          name: 'Sprouty',
+          owner_id: user.id
+        })
+        .select()
+        .single()
+
+      if (error) throw error
+
+      setPlantData(prev => ({
+        ...prev,
+        id: plant.id
+      }))
+    } catch (error) {
+      console.error('Error creating plant:', error)
+    }
+  }
+
+  const signOut = async () => {
+    await supabase.auth.signOut()
+  }
+
+  // Load user's plant data when authenticated - ALWAYS call this hook
+  useEffect(() => {
+    if (user) {
+      loadPlantData()
+    }
+  }, [user])
+
+  // Simulate plant needs over time - ALWAYS call this hook
   useEffect(() => {
     const interval = setInterval(() => {
       setPlantData(prev => {
@@ -82,11 +175,29 @@ export default function Home() {
     return () => clearInterval(interval)
   }, [])
 
-  const handleCare = (action: string) => {
+  // Show auth screen if not logged in - AFTER all hooks
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center">
+        <div className="text-center">
+          <Sprout className="w-12 h-12 text-green-600 mx-auto mb-4 animate-pulse" />
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!user) {
+    return <Auth />
+  }
+
+  const handleCare = async (action: string) => {
+    if (!plantData.id) return
+
     const now = Date.now()
     const newHistoryEntry = {
       id: careHistory.length + 1,
-      friend: "You",
+      friend: user.email || "You",
       action: action,
       time: "just now",
       emoji: action
@@ -94,31 +205,59 @@ export default function Home() {
 
     setCareHistory(prev => [newHistoryEntry, ...prev.slice(0, 9)]) // Keep last 10 entries
 
-    setPlantData(prev => {
-      let updates: any = {}
-      
-      if (action === "water") {
-        updates = {
-          lastWatered: now,
-          health: Math.min(100, prev.health + 15),
-          happiness: Math.min(100, prev.happiness + 5)
-        }
-      } else if (action === "feed") {
-        updates = {
-          lastFed: now,
-          health: Math.min(100, prev.health + 10),
-          growth: Math.min(100, prev.growth + 5)
-        }
-      } else if (action === "play") {
-        updates = {
-          lastPlayed: now,
-          happiness: Math.min(100, prev.happiness + 20),
-          health: Math.min(100, prev.health + 5)
-        }
+    // Calculate updates
+    let updates: any = {}
+    
+    if (action === "water") {
+      updates = {
+        lastWatered: now,
+        health: Math.min(100, plantData.health + 15),
+        happiness: Math.min(100, plantData.happiness + 5)
       }
+    } else if (action === "feed") {
+      updates = {
+        lastFed: now,
+        health: Math.min(100, plantData.health + 10),
+        growth: Math.min(100, plantData.growth + 5)
+      }
+    } else if (action === "play") {
+      updates = {
+        lastPlayed: now,
+        happiness: Math.min(100, plantData.happiness + 20),
+        health: Math.min(100, plantData.health + 5)
+      }
+    }
 
-      return { ...prev, ...updates }
-    })
+    // Update local state immediately
+    setPlantData(prev => ({ ...prev, ...updates }))
+
+    // Save to Supabase
+    try {
+      // Record the care action
+      await supabase
+        .from('care_actions')
+        .insert({
+          plant_id: plantData.id,
+          user_id: user.id,
+          action: action
+        })
+
+      // Update plant stats
+      await supabase
+        .from('plants')
+        .update({
+          health: updates.health,
+          happiness: updates.happiness,
+          growth: updates.growth,
+          last_watered: action === 'water' ? new Date(now).toISOString() : undefined,
+          last_fed: action === 'feed' ? new Date(now).toISOString() : undefined,
+          last_played: action === 'play' ? new Date(now).toISOString() : undefined
+        })
+        .eq('id', plantData.id)
+
+    } catch (error) {
+      console.error('Error saving care action:', error)
+    }
   }
 
   return (
@@ -139,6 +278,13 @@ export default function Home() {
                 <p className="text-sm font-medium text-gray-900">{plantData.name}</p>
                 <p className="text-xs text-gray-500">Level {Math.floor(plantData.growth / 20) + 1}</p>
               </div>
+              <button
+                onClick={signOut}
+                className="flex items-center space-x-2 px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Sign Out</span>
+              </button>
             </div>
           </div>
         </div>
