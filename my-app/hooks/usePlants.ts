@@ -162,11 +162,19 @@ export function usePlants() {
     try {
       setError(null)
 
+      // Get the current session
+      const { data: { session } } = await supabase.auth.getSession()
+      
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+      }
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`
+      }
+
       const response = await fetch(`/api/plants/${id}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         body: JSON.stringify(plantData),
       })
 
@@ -198,8 +206,17 @@ export function usePlants() {
     try {
       setError(null)
 
+      // Get the current session
+      const { data: { session } } = await supabase.auth.getSession()
+      
+      const headers: HeadersInit = {}
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`
+      }
+
       const response = await fetch(`/api/plants/${id}`, {
         method: 'DELETE',
+        headers,
       })
 
       if (!response.ok) {

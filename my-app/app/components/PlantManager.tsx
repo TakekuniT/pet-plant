@@ -2,14 +2,31 @@
 
 import { useState } from 'react'
 import { Plus, Edit3, Trash2, Check, X, Users, Settings } from 'lucide-react'
-import { usePlants, Plant } from '@/hooks/usePlants'
+import { Plant } from '@/hooks/usePlants'
 
 interface PlantManagerProps {
+  plants: Plant[]
+  currentPlant: Plant | null
+  createPlant: (plantData: { name: string }) => Promise<Plant | null>
+  updatePlant: (id: string, plantData: Partial<Plant>) => Promise<Plant | null>
+  deletePlant: (id: string) => Promise<boolean>
+  setCurrentPlant: (plant: Plant) => void
+  loading: boolean
+  error: string | null
   onPlantSelect?: (plant: Plant) => void
 }
 
-export default function PlantManager({ onPlantSelect }: PlantManagerProps) {
-  const { plants, currentPlant, createPlant, updatePlant, deletePlant, setCurrentPlant, loading, error } = usePlants()
+export default function PlantManager({ 
+  plants, 
+  currentPlant, 
+  createPlant, 
+  updatePlant, 
+  deletePlant, 
+  setCurrentPlant, 
+  loading, 
+  error, 
+  onPlantSelect 
+}: PlantManagerProps) {
   const [isCreating, setIsCreating] = useState(false)
   const [editingPlant, setEditingPlant] = useState<Plant | null>(null)
   const [newPlantName, setNewPlantName] = useState('')

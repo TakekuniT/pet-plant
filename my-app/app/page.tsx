@@ -15,7 +15,17 @@ export default function Home() {
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [showPlantManager, setShowPlantManager] = useState(false)
-  const { currentPlant, performCareAction, updatePlant } = usePlants()
+  const { 
+    plants, 
+    currentPlant, 
+    createPlant, 
+    updatePlant, 
+    deletePlant, 
+    setCurrentPlant, 
+    performCareAction, 
+    loading: plantsLoading, 
+    error: plantsError 
+  } = usePlants()
 
   const [friends] = useState([
     { id: 1, name: "Sarah", avatar: "user1", lastCare: "2 hours ago" },
@@ -207,7 +217,17 @@ export default function Home() {
         {showPlantManager ? (
           /* Plant Manager View */
           <div className="max-w-4xl mx-auto">
-            <PlantManager onPlantSelect={(plant) => setShowPlantManager(false)} />
+            <PlantManager 
+              plants={plants}
+              currentPlant={currentPlant}
+              createPlant={createPlant}
+              updatePlant={updatePlant}
+              deletePlant={deletePlant}
+              setCurrentPlant={setCurrentPlant}
+              loading={plantsLoading}
+              error={plantsError}
+              onPlantSelect={(plant) => setShowPlantManager(false)} 
+            />
           </div>
         ) : (
           /* Main Plant Care View */
