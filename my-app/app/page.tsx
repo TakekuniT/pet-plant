@@ -176,7 +176,6 @@ export default function Home() {
             <div className="flex items-center space-x-4">
               <div className="text-right">
                 <p className="text-sm font-medium text-gray-900">{getPlantData().name}</p>
-                <p className="text-xs text-gray-500">Level {Math.floor(getPlantData().growth / 20) + 1}</p>
               </div>
               <button
                 onClick={() => setShowPlantManager(!showPlantManager)}
