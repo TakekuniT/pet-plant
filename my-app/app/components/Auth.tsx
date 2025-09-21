@@ -56,8 +56,8 @@ export default function Auth() {
             <div className="flex items-center space-x-2">
               <Sprout className="w-8 h-8 text-green-600" />
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Plant Monster Pet</h1>
-                <p className="text-sm text-gray-600">Keep your virtual pet alive with friends!</p>
+                <h1 className="text-2xl font-bold text-gray-900">GrowTogether</h1>
+                <p className="text-sm text-gray-600">the app that never lets you grow apart!</p>
               </div>
             </div>
           </div>

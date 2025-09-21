@@ -31,6 +31,7 @@ export default function PlantManager({
   const [editingPlant, setEditingPlant] = useState<Plant | null>(null)
   const [newPlantName, setNewPlantName] = useState('')
   const [editPlantName, setEditPlantName] = useState('')
+  const [showPopulateButton, setShowPopulateButton] = useState(false)
 
   const handleCreatePlant = async () => {
     if (!newPlantName.trim()) return
@@ -123,12 +124,21 @@ export default function PlantManager({
         </div>
         <div className="flex items-center space-x-2">
           <button
-            onClick={populateDatabase}
-            className="flex items-center space-x-2 px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors duration-200"
+            onClick={() => setShowPopulateButton(!showPopulateButton)}
+            className="flex items-center space-x-2 px-3 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-colors duration-200 text-sm"
           >
-            <Users className="w-4 h-4" />
-            <span>Populate DB</span>
+            <Settings className="w-4 h-4" />
+            <span>Dev</span>
           </button>
+          {showPopulateButton && (
+            <button
+              onClick={populateDatabase}
+              className="flex items-center space-x-2 px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors duration-200"
+            >
+              <Users className="w-4 h-4" />
+              <span>Populate DB</span>
+            </button>
+          )}
           <button
             onClick={() => setIsCreating(true)}
             className="flex items-center space-x-2 px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors duration-200"

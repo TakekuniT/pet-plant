@@ -100,11 +100,11 @@ export default function CareTeam({ plantId, currentUserId }: CareTeamProps) {
       <div className="bg-white/60 backdrop-blur-sm rounded-2xl shadow-lg p-6">
         <div className="flex items-center space-x-2 mb-4">
           <Users className="w-6 h-6 text-green-600" />
-          <h3 className="text-lg font-semibold text-gray-900">Care Team</h3>
+          <h3 className="text-lg font-semibold text-gray-900">Bloom Buddies</h3>
         </div>
         <div className="text-center py-4">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto"></div>
-          <p className="text-gray-600 mt-2">Loading care team...</p>
+          <p className="text-gray-600 mt-2">Loading bloom buddies...</p>
         </div>
       </div>
     )
@@ -115,7 +115,7 @@ export default function CareTeam({ plantId, currentUserId }: CareTeamProps) {
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center space-x-2">
           <Users className="w-6 h-6 text-green-600" />
-          <h3 className="text-lg font-semibold text-gray-900">Care Team</h3>
+          <h3 className="text-lg font-semibold text-gray-900">Bloom Buddies</h3>
           <span className="bg-green-100 text-green-800 text-xs font-medium px-2 py-1 rounded-full">
             {members.length} member{members.length !== 1 ? 's' : ''}
           </span>
@@ -270,7 +270,7 @@ export default function CareTeam({ plantId, currentUserId }: CareTeamProps) {
           {members.length === 0 && (
             <div className="text-center py-8">
               <Users className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-              <p className="text-gray-700">No care team members yet</p>
+              <p className="text-gray-700">No bloom buddies yet</p>
               <p className="text-sm text-gray-600">Invite friends to help care for your plant!</p>
             </div>
           )}

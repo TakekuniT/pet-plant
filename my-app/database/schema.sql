@@ -1,4 +1,4 @@
--- Plant Monster Pet Database Schema
+-- GrowTogether Database Schema
 -- Run this in your Supabase SQL Editor
 
 -- Create users table (extends Supabase auth.users)

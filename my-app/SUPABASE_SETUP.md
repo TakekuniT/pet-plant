@@ -1,4 +1,4 @@
-# 🚀 Supabase Setup Guide for Plant Monster Pet
+# 🚀 Supabase Setup Guide for GrowTogether
 
 ## Step 1: Create Supabase Project
 
