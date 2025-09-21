@@ -78,14 +78,14 @@ export default function PlantManager({
 
   const populateDatabase = async () => {
     const plants = [
-      { name: "Happy Sprouty", health: 90, happiness: 95, growth: 60, stage: "mature", mood: "happy" },
-      { name: "Sad Wilty", health: 30, happiness: 20, growth: 15, stage: "seedling", mood: "sad" },
-      { name: "Sleepy Drowsy", health: 70, happiness: 50, growth: 40, stage: "growing", mood: "sleepy" },
-      { name: "Excited Bouncy", health: 85, happiness: 100, growth: 75, stage: "blooming", mood: "excited" },
-      { name: "Grumpy Thorn", health: 45, happiness: 35, growth: 25, stage: "seedling", mood: "sad" },
-      { name: "Zen Master", health: 80, happiness: 70, growth: 50, stage: "mature", mood: "sleepy" },
-      { name: "Party Plant", health: 95, happiness: 100, growth: 80, stage: "blooming", mood: "excited" },
-      { name: "Content Bloom", health: 75, happiness: 80, growth: 55, stage: "growing", mood: "happy" }
+      { name: "Happy Sprouty", health: 90, happiness: 95, growth: 60, stage: "mature" as const, mood: "happy" as const },
+      { name: "Sad Wilty", health: 30, happiness: 20, growth: 15, stage: "seedling" as const, mood: "sad" as const },
+      { name: "Sleepy Drowsy", health: 70, happiness: 50, growth: 40, stage: "growing" as const, mood: "sleepy" as const },
+      { name: "Excited Bouncy", health: 85, happiness: 100, growth: 75, stage: "blooming" as const, mood: "excited" as const },
+      { name: "Grumpy Thorn", health: 45, happiness: 35, growth: 25, stage: "seedling" as const, mood: "sad" as const },
+      { name: "Zen Master", health: 80, happiness: 70, growth: 50, stage: "mature" as const, mood: "sleepy" as const },
+      { name: "Party Plant", health: 95, happiness: 100, growth: 80, stage: "blooming" as const, mood: "excited" as const },
+      { name: "Content Bloom", health: 75, happiness: 80, growth: 55, stage: "growing" as const, mood: "happy" as const }
     ]
 
     console.log('🌱 Starting to populate database with plants...')

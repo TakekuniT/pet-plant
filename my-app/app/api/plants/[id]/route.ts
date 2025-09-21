@@ -51,7 +51,7 @@ export async function GET(
 
     // Check if user has access to this plant
     const hasAccess = plant.owner_id === user.id || 
-      plant.plant_members.some((member: any) => member.user_id === user.id)
+      plant.plant_members.some((member: { user_id: string }) => member.user_id === user.id)
 
     if (!hasAccess) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
@@ -105,7 +105,15 @@ export async function PUT(
     }
 
     // Update the plant
-    const updateData: any = {}
+    const updateData: {
+      name?: string,
+      health?: number,
+      happiness?: number,
+      growth?: number,
+      stage?: 'seedling' | 'growing' | 'mature' | 'blooming',
+      mood?: 'happy' | 'sad' | 'excited' | 'sleepy',
+      updated_at: string
+    } = { updated_at: new Date().toISOString() }
     if (name !== undefined) updateData.name = name
     if (health !== undefined) updateData.health = Math.max(0, Math.min(100, health))
     if (happiness !== undefined) updateData.happiness = Math.max(0, Math.min(100, happiness))

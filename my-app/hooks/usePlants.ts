@@ -38,48 +38,6 @@ export function usePlants() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // Load plants from localStorage on mount
-  useEffect(() => {
-    const savedPlants = localStorage.getItem('plants')
-    if (savedPlants) {
-      try {
-        const parsedPlants = JSON.parse(savedPlants)
-        setPlants(parsedPlants)
-        if (parsedPlants.length > 0 && !currentPlant) {
-          setCurrentPlant(parsedPlants[0])
-        }
-      } catch (error) {
-        console.error('Error parsing saved plants:', error)
-      }
-    }
-  }, [])
-
-  // Handle authentication state changes
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_OUT') {
-        // Clear plants when user signs out
-        setPlants([])
-        setCurrentPlant(null)
-        localStorage.removeItem('plants')
-        localStorage.removeItem('currentPlant')
-      } else if (event === 'SIGNED_IN' && session?.user) {
-        // Refresh the page when user signs in to ensure everything loads properly
-        console.log('User signed in, refreshing page...')
-        window.location.reload()
-      }
-    })
-
-    return () => subscription.unsubscribe()
-  }, [])
-
-  // Save plants to localStorage whenever plants change (but not on initial load)
-  useEffect(() => {
-    if (plants.length > 0) {
-      localStorage.setItem('plants', JSON.stringify(plants))
-    }
-  }, [plants])
-
   // Fetch all plants for the current user
   const fetchPlants = async () => {
     try {
@@ -120,7 +78,15 @@ export function usePlants() {
       setLoading(true)
       setError(null)
 
-      const response = await fetch(`/api/plants/${id}`)
+      // Get the current session
+      const { data: { session } } = await supabase.auth.getSession()
+      
+      const headers: HeadersInit = {}
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`
+      }
+
+      const response = await fetch(`/api/plants/${id}`, { headers })
       if (!response.ok) {
         throw new Error('Failed to fetch plant')
       }
@@ -282,7 +248,7 @@ export function usePlants() {
       }
 
       const data = await response.json()
-      const updatedPlant = data.plant
+      const updatedPlant = data
 
       setPlants(prev => prev.map(plant => 
         plant.id === plantId ? updatedPlant : plant

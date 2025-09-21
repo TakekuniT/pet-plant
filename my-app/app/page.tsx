@@ -12,7 +12,7 @@ import PlantManager from "./components/PlantManager"
 import { usePlants, Plant } from "@/hooks/usePlants"
 
 export default function Home() {
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<{ id: string; email?: string } | null>(null)
   const [loading, setLoading] = useState(true)
   const [showPlantManager, setShowPlantManager] = useState(false)
   const { 
@@ -40,6 +40,12 @@ export default function Home() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null)
       setLoading(false)
+      
+      // Refresh the page when user signs in to ensure everything loads properly
+      if (event === 'SIGNED_IN' && session?.user) {
+        console.log('User signed in, refreshing page...')
+        window.location.reload()
+      }
     })
 
     return () => subscription.unsubscribe()
@@ -123,7 +129,7 @@ export default function Home() {
         updatePlant(currentPlant.id, {
           health: newHealth,
           happiness: newHappiness,
-          mood: newMood as any
+          mood: newMood as 'happy' | 'sad' | 'excited' | 'sleepy'
         })
       }
     }, 30000) // Update every 30 seconds

@@ -54,7 +54,16 @@ export async function POST(
     }
 
     // Calculate new plant stats based on action
-    let updates: any = {}
+    const updates: {
+      health?: number,
+      happiness?: number,
+      growth?: number,
+      stage?: 'seedling' | 'growing' | 'mature' | 'blooming',
+      last_watered?: string,
+      last_fed?: string,
+      last_played?: string,
+      updated_at: string
+    } = { updated_at: new Date().toISOString() }
     const now = new Date().toISOString()
 
     switch (actionType) {
