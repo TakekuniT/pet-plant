@@ -1,13 +1,13 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Sprout, Users, History, Heart, Droplets, Zap, Moon, LogOut, Settings, Plus } from "lucide-react"
+import { Sprout, Heart, Droplets, Zap, Moon, LogOut, Settings, Plus } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import Auth from "./components/Auth"
 import SproutyMonster from "./components/SproutyMonster"
 import CarePanel from "./components/CarePanel"
-import FriendsList from "./components/FriendsList"
 import CareHistory from "./components/CareHistory"
+import CareTeam from "./components/CareTeam"
 import PlantManager from "./components/PlantManager"
 import { usePlants, Plant } from "@/hooks/usePlants"
 
@@ -27,18 +27,6 @@ export default function Home() {
     error: plantsError 
   } = usePlants()
 
-  const [friends] = useState([
-    { id: 1, name: "Sarah", avatar: "user1", lastCare: "2 hours ago" },
-    { id: 2, name: "Mike", avatar: "user2", lastCare: "1 hour ago" },
-    { id: 3, name: "Emma", avatar: "user3", lastCare: "30 min ago" }
-  ])
-
-  const [careHistory, setCareHistory] = useState([
-    { id: 1, friend: "Emma", action: "watered", time: "30 min ago", emoji: "water" },
-    { id: 2, friend: "Mike", action: "fed", time: "1 hour ago", emoji: "feed" },
-    { id: 3, friend: "Sarah", action: "played", time: "2 hours ago", emoji: "play" },
-    { id: 4, friend: "You", action: "watered", time: "3 hours ago", emoji: "water" }
-  ])
 
   // Check authentication status
   useEffect(() => {
@@ -162,16 +150,6 @@ export default function Home() {
   const handleCare = async (action: string) => {
     if (!currentPlant) return
 
-    const newHistoryEntry = {
-      id: careHistory.length + 1,
-      friend: user.email || "You",
-      action: action,
-      time: "just now",
-      emoji: action
-    }
-
-    setCareHistory(prev => [newHistoryEntry, ...prev.slice(0, 9)]) // Keep last 10 entries
-
     // Use the new CRUD operation
     await performCareAction(currentPlant.id, action as 'water' | 'feed' | 'play')
   }
@@ -283,11 +261,15 @@ export default function Home() {
 
             {/* Sidebar */}
             <div className="space-y-6">
-              {/* Friends List */}
-              <FriendsList friends={friends} />
+              {/* Care Team */}
+              {currentPlant && (
+                <CareTeam plantId={currentPlant.id} currentUserId={user?.id} />
+              )}
               
               {/* Care History */}
-              <CareHistory history={careHistory} />
+              {currentPlant && (
+                <CareHistory plantId={currentPlant.id} />
+              )}
             </div>
           </div>
         )}

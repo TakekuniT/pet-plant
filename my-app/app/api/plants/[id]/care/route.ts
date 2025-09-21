@@ -4,17 +4,25 @@ import { createClient } from '@/lib/supabase-server'
 // POST /api/plants/[id]/care - Perform care action on a plant
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = createClient()
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    
+    // Get the authorization header
+    const authHeader = request.headers.get('authorization')
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    const token = authHeader.split(' ')[1]
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
     
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { id } = params
+    const { id } = await params
     const body = await request.json()
     const { actionType } = body
 
@@ -104,20 +112,34 @@ export async function POST(
     }
 
     // Record the care action
-    const { error: actionError } = await supabase
+    const { data: careAction, error: actionError } = await supabase
       .from('care_actions')
       .insert({
         plant_id: id,
         user_id: user.id,
         action: actionType
       })
+      .select(`
+        id,
+        action,
+        created_at,
+        users (
+          id,
+          name,
+          email
+        )
+      `)
+      .single()
 
     if (actionError) {
       console.error('Error recording care action:', actionError)
       // Don't fail the request, just log the error
     }
 
-    return NextResponse.json(updatedPlant)
+    return NextResponse.json({
+      plant: updatedPlant,
+      careAction: careAction
+    })
   } catch (error) {
     console.error('Error in POST /api/plants/[id]/care:', error)
     return NextResponse.json({ error: 'Internal server error', details: error }, { status: 500 })

@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase-server'
 // GET /api/plants/[id] - Get a specific plant
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = createClient()
@@ -22,7 +22,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { id } = params
+    const { id } = await params
 
     // Get plant with members and care actions
     const { data: plant, error } = await supabase
@@ -67,7 +67,7 @@ export async function GET(
 // PUT /api/plants/[id] - Update a plant
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = createClient()
@@ -85,7 +85,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { id } = params
+    const { id } = await params
     const body = await request.json()
     const { name, health, happiness, growth, stage, mood } = body
 
@@ -135,7 +135,7 @@ export async function PUT(
 // DELETE /api/plants/[id] - Delete a plant
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = createClient()
@@ -153,7 +153,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { id } = params
+    const { id } = await params
 
     // Check if user owns the plant
     const { data: plant, error: fetchError } = await supabase

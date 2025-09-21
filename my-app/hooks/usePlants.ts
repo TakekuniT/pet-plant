@@ -242,11 +242,19 @@ export function usePlants() {
     try {
       setError(null)
 
+      // Get the current session
+      const { data: { session } } = await supabase.auth.getSession()
+      
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+      }
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`
+      }
+
       const response = await fetch(`/api/plants/${plantId}/care`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         body: JSON.stringify({ actionType: action }),
       })
 
@@ -255,7 +263,7 @@ export function usePlants() {
       }
 
       const data = await response.json()
-      const updatedPlant = data
+      const updatedPlant = data.plant
 
       setPlants(prev => prev.map(plant => 
         plant.id === plantId ? updatedPlant : plant
