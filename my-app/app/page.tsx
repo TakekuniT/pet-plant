@@ -1,29 +1,21 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Sprout, Users, History, Heart, Droplets, Zap, Moon, LogOut } from "lucide-react"
+import { Sprout, Users, History, Heart, Droplets, Zap, Moon, LogOut, Settings, Plus } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import Auth from "./components/Auth"
 import SproutyMonster from "./components/SproutyMonster"
 import CarePanel from "./components/CarePanel"
 import FriendsList from "./components/FriendsList"
 import CareHistory from "./components/CareHistory"
+import PlantManager from "./components/PlantManager"
+import { usePlants, Plant } from "@/hooks/usePlants"
 
 export default function Home() {
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
-  const [plantData, setPlantData] = useState({
-    id: null,
-    name: "Sprouty",
-    health: 80,
-    happiness: 75,
-    growth: 25,
-    lastWatered: Date.now() - 2 * 60 * 60 * 1000, // 2 hours ago
-    lastFed: Date.now() - 4 * 60 * 60 * 1000, // 4 hours ago
-    lastPlayed: Date.now() - 1 * 60 * 60 * 1000, // 1 hour ago
-    stage: "seedling", // seedling, growing, mature, blooming
-    mood: "happy" // happy, sad, excited, sleepy
-  })
+  const [showPlantManager, setShowPlantManager] = useState(false)
+  const { currentPlant, performCareAction, updatePlant } = usePlants()
 
   const [friends] = useState([
     { id: 1, name: "Sarah", avatar: "user1", lastCare: "2 hours ago" },
@@ -55,63 +47,34 @@ export default function Home() {
     return () => subscription.unsubscribe()
   }, [])
 
-  const loadPlantData = async () => {
-    if (!user) return
-    
-    try {
-      // Get user's plants
-      const { data: plants, error } = await supabase
-        .from('plants')
-        .select('*')
-        .eq('owner_id', user.id)
-        .limit(1)
-
-      if (error) throw error
-
-      if (plants && plants.length > 0) {
-        const plant = plants[0]
-        setPlantData({
-          id: plant.id,
-          name: plant.name,
-          health: plant.health,
-          happiness: plant.happiness,
-          growth: plant.growth,
-          lastWatered: new Date(plant.last_watered).getTime(),
-          lastFed: new Date(plant.last_fed).getTime(),
-          lastPlayed: new Date(plant.last_played).getTime(),
-          stage: plant.stage,
-          mood: plant.mood
-        })
-      } else {
-        // Create a new plant for the user
-        await createNewPlant()
+  // Convert Plant to the format expected by components
+  const getPlantData = () => {
+    if (!currentPlant) {
+      return {
+        id: null,
+        name: "No Plant Selected",
+        health: 80,
+        happiness: 75,
+        growth: 25,
+        lastWatered: Date.now() - 2 * 60 * 60 * 1000,
+        lastFed: Date.now() - 4 * 60 * 60 * 1000,
+        lastPlayed: Date.now() - 1 * 60 * 60 * 1000,
+        stage: "seedling",
+        mood: "happy"
       }
-    } catch (error) {
-      console.error('Error loading plant data:', error)
     }
-  }
 
-  const createNewPlant = async () => {
-    if (!user) return
-    
-    try {
-      const { data: plant, error } = await supabase
-        .from('plants')
-        .insert({
-          name: 'Sprouty',
-          owner_id: user.id
-        })
-        .select()
-        .single()
-
-      if (error) throw error
-
-      setPlantData(prev => ({
-        ...prev,
-        id: plant.id
-      }))
-    } catch (error) {
-      console.error('Error creating plant:', error)
+    return {
+      id: currentPlant.id,
+      name: currentPlant.name,
+      health: currentPlant.health,
+      happiness: currentPlant.happiness,
+      growth: currentPlant.growth,
+      lastWatered: new Date(currentPlant.last_watered).getTime(),
+      lastFed: new Date(currentPlant.last_fed).getTime(),
+      lastPlayed: new Date(currentPlant.last_played).getTime(),
+      stage: currentPlant.stage,
+      mood: currentPlant.mood
     }
   }
 
@@ -119,61 +82,56 @@ export default function Home() {
     await supabase.auth.signOut()
   }
 
-  // Load user's plant data when authenticated - ALWAYS call this hook
-  useEffect(() => {
-    if (user) {
-      loadPlantData()
-    }
-  }, [user])
-
   // Simulate plant needs over time - ALWAYS call this hook
   useEffect(() => {
+    if (!currentPlant) return
+
     const interval = setInterval(() => {
-      setPlantData(prev => {
-        const now = Date.now()
-        const timeSinceWatered = now - prev.lastWatered
-        const timeSinceFed = now - prev.lastFed
-        const timeSincePlayed = now - prev.lastPlayed
+      const now = Date.now()
+      const timeSinceWatered = now - new Date(currentPlant.last_watered).getTime()
+      const timeSinceFed = now - new Date(currentPlant.last_fed).getTime()
+      const timeSincePlayed = now - new Date(currentPlant.last_played).getTime()
 
-        let newHealth = prev.health
-        let newHappiness = prev.happiness
-        let newMood = prev.mood
+      let newHealth = currentPlant.health
+      let newHappiness = currentPlant.happiness
+      let newMood = currentPlant.mood
 
-        // Health decreases over time without care
-        if (timeSinceWatered > 6 * 60 * 60 * 1000) { // 6 hours
-          newHealth = Math.max(0, prev.health - 1)
-        }
-        if (timeSinceFed > 8 * 60 * 60 * 1000) { // 8 hours
-          newHealth = Math.max(0, prev.health - 1)
-        }
+      // Health decreases over time without care
+      if (timeSinceWatered > 6 * 60 * 60 * 1000) { // 6 hours
+        newHealth = Math.max(0, currentPlant.health - 1)
+      }
+      if (timeSinceFed > 8 * 60 * 60 * 1000) { // 8 hours
+        newHealth = Math.max(0, currentPlant.health - 1)
+      }
 
-        // Happiness decreases without play
-        if (timeSincePlayed > 4 * 60 * 60 * 1000) { // 4 hours
-          newHappiness = Math.max(0, prev.happiness - 2)
-        }
+      // Happiness decreases without play
+      if (timeSincePlayed > 4 * 60 * 60 * 1000) { // 4 hours
+        newHappiness = Math.max(0, currentPlant.happiness - 2)
+      }
 
-        // Update mood based on health and happiness
-        if (newHealth > 80 && newHappiness > 80) {
-          newMood = "happy"
-        } else if (newHealth < 30 || newHappiness < 30) {
-          newMood = "sad"
-        } else if (newHappiness > 70) {
-          newMood = "excited"
-        } else {
-          newMood = "sleepy"
-        }
+      // Update mood based on health and happiness
+      if (newHealth > 80 && newHappiness > 80) {
+        newMood = "happy"
+      } else if (newHealth < 30 || newHappiness < 30) {
+        newMood = "sad"
+      } else if (newHappiness > 70) {
+        newMood = "excited"
+      } else {
+        newMood = "sleepy"
+      }
 
-        return {
-          ...prev,
+      // Update plant if stats changed
+      if (newHealth !== currentPlant.health || newHappiness !== currentPlant.happiness || newMood !== currentPlant.mood) {
+        updatePlant(currentPlant.id, {
           health: newHealth,
           happiness: newHappiness,
-          mood: newMood
-        }
-      })
+          mood: newMood as any
+        })
+      }
     }, 30000) // Update every 30 seconds
 
     return () => clearInterval(interval)
-  }, [])
+  }, [currentPlant, updatePlant])
 
   // Show auth screen if not logged in - AFTER all hooks
   if (loading) {
@@ -192,9 +150,8 @@ export default function Home() {
   }
 
   const handleCare = async (action: string) => {
-    if (!plantData.id) return
+    if (!currentPlant) return
 
-    const now = Date.now()
     const newHistoryEntry = {
       id: careHistory.length + 1,
       friend: user.email || "You",
@@ -205,59 +162,8 @@ export default function Home() {
 
     setCareHistory(prev => [newHistoryEntry, ...prev.slice(0, 9)]) // Keep last 10 entries
 
-    // Calculate updates
-    let updates: any = {}
-    
-    if (action === "water") {
-      updates = {
-        lastWatered: now,
-        health: Math.min(100, plantData.health + 15),
-        happiness: Math.min(100, plantData.happiness + 5)
-      }
-    } else if (action === "feed") {
-      updates = {
-        lastFed: now,
-        health: Math.min(100, plantData.health + 10),
-        growth: Math.min(100, plantData.growth + 5)
-      }
-    } else if (action === "play") {
-      updates = {
-        lastPlayed: now,
-        happiness: Math.min(100, plantData.happiness + 20),
-        health: Math.min(100, plantData.health + 5)
-      }
-    }
-
-    // Update local state immediately
-    setPlantData(prev => ({ ...prev, ...updates }))
-
-    // Save to Supabase
-    try {
-      // Record the care action
-      await supabase
-        .from('care_actions')
-        .insert({
-          plant_id: plantData.id,
-          user_id: user.id,
-          action: action
-        })
-
-      // Update plant stats
-      await supabase
-        .from('plants')
-        .update({
-          health: updates.health,
-          happiness: updates.happiness,
-          growth: updates.growth,
-          last_watered: action === 'water' ? new Date(now).toISOString() : undefined,
-          last_fed: action === 'feed' ? new Date(now).toISOString() : undefined,
-          last_played: action === 'play' ? new Date(now).toISOString() : undefined
-        })
-        .eq('id', plantData.id)
-
-    } catch (error) {
-      console.error('Error saving care action:', error)
-    }
+    // Use the new CRUD operation
+    await performCareAction(currentPlant.id, action as 'water' | 'feed' | 'play')
   }
 
   return (
@@ -275,9 +181,16 @@ export default function Home() {
             </div>
             <div className="flex items-center space-x-4">
               <div className="text-right">
-                <p className="text-sm font-medium text-gray-900">{plantData.name}</p>
-                <p className="text-xs text-gray-500">Level {Math.floor(plantData.growth / 20) + 1}</p>
+                <p className="text-sm font-medium text-gray-900">{getPlantData().name}</p>
+                <p className="text-xs text-gray-500">Level {Math.floor(getPlantData().growth / 20) + 1}</p>
               </div>
+              <button
+                onClick={() => setShowPlantManager(!showPlantManager)}
+                className="flex items-center space-x-2 px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+              >
+                <Settings className="w-4 h-4" />
+                <span>Manage Plants</span>
+              </button>
               <button
                 onClick={signOut}
                 className="flex items-center space-x-2 px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
@@ -291,46 +204,73 @@ export default function Home() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Plant Monster Area */}
-          <div className="lg:col-span-2">
-            <div className="bg-white/60 backdrop-blur-sm rounded-2xl shadow-lg p-8">
-              <div className="text-center mb-6">
-                <h2 className="text-xl font-semibold text-gray-800 mb-2 flex items-center justify-center space-x-2">
-                  <Sprout className="w-6 h-6 text-green-600" />
-                  <span>Meet {plantData.name}!</span>
-                </h2>
-                <div className="flex items-center justify-center space-x-2 text-gray-600">
-                  <div className="w-5 h-5">
-                    {plantData.mood === "happy" && <Heart className="w-5 h-5 text-green-500" />}
-                    {plantData.mood === "sad" && <Droplets className="w-5 h-5 text-blue-400" />}
-                    {plantData.mood === "excited" && <Zap className="w-5 h-5 text-yellow-500" />}
-                    {plantData.mood === "sleepy" && <Moon className="w-5 h-5 text-purple-400" />}
+        {showPlantManager ? (
+          /* Plant Manager View */
+          <div className="max-w-4xl mx-auto">
+            <PlantManager onPlantSelect={(plant) => setShowPlantManager(false)} />
+          </div>
+        ) : (
+          /* Main Plant Care View */
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Main Plant Monster Area */}
+            <div className="lg:col-span-2">
+              <div className="bg-white/60 backdrop-blur-sm rounded-2xl shadow-lg p-8">
+                {!currentPlant ? (
+                  /* No Plant Selected */
+                  <div className="text-center py-12">
+                    <Sprout className="w-16 h-16 text-green-600 mx-auto mb-4" />
+                    <h2 className="text-2xl font-semibold text-gray-800 mb-4">No Plant Selected</h2>
+                    <p className="text-gray-600 mb-6">Create your first plant monster to get started!</p>
+                    <button
+                      onClick={() => setShowPlantManager(true)}
+                      className="inline-flex items-center space-x-2 px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors duration-200"
+                    >
+                      <Plus className="w-5 h-5" />
+                      <span>Create Your First Plant</span>
+                    </button>
                   </div>
-                  <span>
-                    {plantData.mood === "happy" && "I'm feeling great! Thanks for taking care of me!"}
-                    {plantData.mood === "sad" && "I'm not feeling well... I need some love!"}
-                    {plantData.mood === "excited" && "I'm so excited! Let's play together!"}
-                    {plantData.mood === "sleepy" && "I'm feeling a bit tired... maybe some rest?"}
-                  </span>
-                </div>
+                ) : (
+                  /* Plant Care Interface */
+                  <>
+                    <div className="text-center mb-6">
+                      <h2 className="text-xl font-semibold text-gray-800 mb-2 flex items-center justify-center space-x-2">
+                        <Sprout className="w-6 h-6 text-green-600" />
+                        <span>Meet {getPlantData().name}!</span>
+                      </h2>
+                      <div className="flex items-center justify-center space-x-2 text-gray-600">
+                        <div className="w-5 h-5">
+                          {getPlantData().mood === "happy" && <Heart className="w-5 h-5 text-green-500" />}
+                          {getPlantData().mood === "sad" && <Droplets className="w-5 h-5 text-blue-400" />}
+                          {getPlantData().mood === "excited" && <Zap className="w-5 h-5 text-yellow-500" />}
+                          {getPlantData().mood === "sleepy" && <Moon className="w-5 h-5 text-purple-400" />}
+                        </div>
+                        <span>
+                          {getPlantData().mood === "happy" && "I'm feeling great! Thanks for taking care of me!"}
+                          {getPlantData().mood === "sad" && "I'm not feeling well... I need some love!"}
+                          {getPlantData().mood === "excited" && "I'm so excited! Let's play together!"}
+                          {getPlantData().mood === "sleepy" && "I'm feeling a bit tired... maybe some rest?"}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <SproutyMonster plantData={getPlantData()} />
+                    
+                    <CarePanel plantData={getPlantData()} onCare={handleCare} />
+                  </>
+                )}
               </div>
+            </div>
+
+            {/* Sidebar */}
+            <div className="space-y-6">
+              {/* Friends List */}
+              <FriendsList friends={friends} />
               
-              <SproutyMonster plantData={plantData} />
-              
-              <CarePanel plantData={plantData} onCare={handleCare} />
+              {/* Care History */}
+              <CareHistory history={careHistory} />
             </div>
           </div>
-
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Friends List */}
-            <FriendsList friends={friends} />
-            
-            {/* Care History */}
-            <CareHistory history={careHistory} />
-          </div>
-        </div>
+        )}
       </main>
     </div>
   )

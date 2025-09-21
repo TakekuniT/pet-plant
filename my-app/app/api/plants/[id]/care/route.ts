@@ -1,74 +1,100 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase-server'
 
-// POST /api/plants/[id]/care - Perform a care action on a plant
+// POST /api/plants/[id]/care - Perform care action on a plant
 export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    const supabase = createClient()
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const plantId = params.id
+    const { id } = params
     const body = await request.json()
-    const { action } = body
+    const { actionType } = body
 
-    if (!action || !['water', 'feed', 'play'].includes(action)) {
-      return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
+    if (!actionType || !['water', 'feed', 'play'].includes(actionType)) {
+      return NextResponse.json({ error: 'Invalid action type' }, { status: 400 })
     }
 
     // Check if user has access to this plant
-    const { data: plant, error: plantError } = await supabase
+    const { data: plant, error: fetchError } = await supabase
       .from('plants')
-      .select(`
-        *,
-        plant_members!inner(user_id)
-      `)
-      .eq('id', plantId)
-      .or(`owner_id.eq.${user.id},plant_members.user_id.eq.${user.id}`)
+      .select('*')
+      .eq('id', id)
       .single()
 
-    if (plantError || !plant) {
-      return NextResponse.json({ error: 'Plant not found or access denied' }, { status: 404 })
+    if (fetchError || !plant) {
+      return NextResponse.json({ error: 'Plant not found' }, { status: 404 })
+    }
+
+    // Check if user is owner or member
+    const { data: member } = await supabase
+      .from('plant_members')
+      .select('role')
+      .eq('plant_id', id)
+      .eq('user_id', user.id)
+      .single()
+
+    if (plant.owner_id !== user.id && !member) {
+      return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 
     // Calculate new plant stats based on action
     let updates: any = {}
     const now = new Date().toISOString()
 
-    switch (action) {
+    switch (actionType) {
       case 'water':
-        updates = {
-          last_watered: now,
-          health: Math.min(100, plant.health + 15),
-          happiness: Math.min(100, plant.happiness + 5)
-        }
+        updates.health = Math.min(100, plant.health + 15)
+        updates.happiness = Math.min(100, plant.happiness + 5)
+        updates.last_watered = now
         break
       case 'feed':
-        updates = {
-          last_fed: now,
-          health: Math.min(100, plant.health + 10),
-          growth: Math.min(100, plant.growth + 5)
-        }
+        updates.health = Math.min(100, plant.health + 10)
+        updates.happiness = Math.min(100, plant.happiness + 10)
+        updates.growth = Math.min(100, plant.growth + 5)
+        updates.last_fed = now
         break
       case 'play':
-        updates = {
-          last_played: now,
-          happiness: Math.min(100, plant.happiness + 20),
-          health: Math.min(100, plant.health + 5)
-        }
+        updates.happiness = Math.min(100, plant.happiness + 20)
+        updates.health = Math.min(100, plant.health + 5)
+        updates.last_played = now
         break
     }
 
-    // Update plant
+    // Update mood based on happiness
+    if (updates.happiness >= 80) {
+      updates.mood = 'happy'
+    } else if (updates.happiness >= 60) {
+      updates.mood = 'excited'
+    } else if (updates.happiness >= 40) {
+      updates.mood = 'sleepy'
+    } else {
+      updates.mood = 'sad'
+    }
+
+    // Update growth stage based on growth
+    if (updates.growth >= 80) {
+      updates.stage = 'blooming'
+    } else if (updates.growth >= 60) {
+      updates.stage = 'mature'
+    } else if (updates.growth >= 30) {
+      updates.stage = 'growing'
+    } else {
+      updates.stage = 'seedling'
+    }
+
+    // Update the plant
     const { data: updatedPlant, error: updateError } = await supabase
       .from('plants')
       .update(updates)
-      .eq('id', plantId)
+      .eq('id', id)
       .select()
       .single()
 
@@ -81,9 +107,9 @@ export async function POST(
     const { error: actionError } = await supabase
       .from('care_actions')
       .insert({
-        plant_id: plantId,
+        plant_id: id,
         user_id: user.id,
-        action
+        action: actionType
       })
 
     if (actionError) {
@@ -91,9 +117,9 @@ export async function POST(
       // Don't fail the request, just log the error
     }
 
-    return NextResponse.json({ plant: updatedPlant })
+    return NextResponse.json(updatedPlant)
   } catch (error) {
     console.error('Error in POST /api/plants/[id]/care:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ error: 'Internal server error', details: error }, { status: 500 })
   }
 }

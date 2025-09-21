@@ -1,9 +1,6 @@
 -- Plant Monster Pet Database Schema
 -- Run this in your Supabase SQL Editor
 
--- Enable Row Level Security
-ALTER DATABASE postgres SET "app.jwt_secret" TO 'your-jwt-secret';
-
 -- Create users table (extends Supabase auth.users)
 CREATE TABLE public.users (
   id UUID REFERENCES auth.users(id) PRIMARY KEY,
