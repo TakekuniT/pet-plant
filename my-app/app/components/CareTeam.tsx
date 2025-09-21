@@ -172,7 +172,7 @@ export default function CareTeam({ plantId, currentUserId }: CareTeamProps) {
       <div className="space-y-3">
         {members.map((member) => (
           <div key={member.id} className="p-3 bg-white/50 rounded-lg border border-gray-200">
-            <div className="flex items-center justify-between">
+            <div className="flex items-start justify-between">
               <div className="flex items-center space-x-3">
                 <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center text-white font-medium">
                   {member.users.name.charAt(0).toUpperCase()}
@@ -189,7 +189,7 @@ export default function CareTeam({ plantId, currentUserId }: CareTeamProps) {
                 </div>
               </div>
               
-              <div className="flex items-center space-x-2">
+              <div className="flex flex-col items-end space-y-2">
                 <span className={`px-2 py-1 text-xs font-medium rounded-full border ${getRoleColor(member.role)}`}>
                   {member.role}
                 </span>
