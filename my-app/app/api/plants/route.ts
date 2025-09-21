@@ -29,19 +29,41 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ plants: [] })
     }
 
-    // Get plants where user is owner
-    const { data: plants, error } = await supabase
+    // Get plants where user is owner OR member
+    const { data: ownedPlants, error: ownedError } = await supabase
       .from('plants')
       .select('*')
       .eq('owner_id', user.id)
 
-    if (error) {
-      console.error('Error fetching plants:', error)
-      return NextResponse.json({ plants: [] })
+    if (ownedError) {
+      console.error('Error fetching owned plants:', ownedError)
     }
 
-    console.log('Found plants:', plants)
-    return NextResponse.json({ plants: plants || [] })
+    // Get plants where user is a member
+    const { data: memberPlants, error: memberError } = await supabase
+      .from('plant_members')
+      .select(`
+        plants (*)
+      `)
+      .eq('user_id', user.id)
+
+    if (memberError) {
+      console.error('Error fetching member plants:', memberError)
+    }
+
+    // Combine owned plants and member plants
+    const allPlants = [
+      ...(ownedPlants || []),
+      ...(memberPlants?.map(member => member.plants).filter(Boolean) || [])
+    ]
+
+    // Remove duplicates (in case user is both owner and member of same plant)
+    const uniquePlants = allPlants.filter((plant, index, self) => 
+      index === self.findIndex(p => p.id === plant.id)
+    )
+
+    console.log('Found plants:', uniquePlants)
+    return NextResponse.json({ plants: uniquePlants })
   } catch (error) {
     console.error('Error in GET /api/plants:', error)
     return NextResponse.json({ plants: [] })
