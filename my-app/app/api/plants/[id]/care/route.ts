@@ -59,6 +59,7 @@ export async function POST(
       happiness?: number,
       growth?: number,
       stage?: 'seedling' | 'growing' | 'mature' | 'blooming',
+      mood?: 'happy' | 'excited' | 'sleepy' | 'sad',
       last_watered?: string,
       last_fed?: string,
       last_played?: string,
@@ -85,23 +86,25 @@ export async function POST(
         break
     }
 
-    // Update mood based on happiness
-    if (updates.happiness >= 80) {
+    // Update mood based on happiness (use current plant happiness if not updated)
+    const currentHappiness = updates.happiness ?? plant.happiness
+    if (currentHappiness >= 80) {
       updates.mood = 'happy'
-    } else if (updates.happiness >= 60) {
+    } else if (currentHappiness >= 60) {
       updates.mood = 'excited'
-    } else if (updates.happiness >= 40) {
+    } else if (currentHappiness >= 40) {
       updates.mood = 'sleepy'
     } else {
       updates.mood = 'sad'
     }
 
-    // Update growth stage based on growth
-    if (updates.growth >= 80) {
+    // Update growth stage based on growth (use current plant growth if not updated)
+    const currentGrowth = updates.growth ?? plant.growth
+    if (currentGrowth >= 80) {
       updates.stage = 'blooming'
-    } else if (updates.growth >= 60) {
+    } else if (currentGrowth >= 60) {
       updates.stage = 'mature'
-    } else if (updates.growth >= 30) {
+    } else if (currentGrowth >= 30) {
       updates.stage = 'growing'
     } else {
       updates.stage = 'seedling'

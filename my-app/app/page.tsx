@@ -12,7 +12,7 @@ import PlantManager from "./components/PlantManager"
 import { usePlants, Plant } from "@/hooks/usePlants"
 
 export default function Home() {
-  const [user, setUser] = useState<{ id: string; email?: string } | null>(null)
+  const [user, setUser] = useState<{ id: string; email?: string; user_metadata?: { name?: string } } | null>(null)
   const [loading, setLoading] = useState(true)
   const [showPlantManager, setShowPlantManager] = useState(false)
   const { 
