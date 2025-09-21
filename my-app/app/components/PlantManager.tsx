@@ -76,6 +76,44 @@ export default function PlantManager({
     setEditPlantName('')
   }
 
+  const populateDatabase = async () => {
+    const plants = [
+      { name: "Happy Sprouty", health: 90, happiness: 95, growth: 60, stage: "mature", mood: "happy" },
+      { name: "Sad Wilty", health: 30, happiness: 20, growth: 15, stage: "seedling", mood: "sad" },
+      { name: "Sleepy Drowsy", health: 70, happiness: 50, growth: 40, stage: "growing", mood: "sleepy" },
+      { name: "Excited Bouncy", health: 85, happiness: 100, growth: 75, stage: "blooming", mood: "excited" },
+      { name: "Grumpy Thorn", health: 45, happiness: 35, growth: 25, stage: "seedling", mood: "sad" },
+      { name: "Zen Master", health: 80, happiness: 70, growth: 50, stage: "mature", mood: "sleepy" },
+      { name: "Party Plant", health: 95, happiness: 100, growth: 80, stage: "blooming", mood: "excited" },
+      { name: "Content Bloom", health: 75, happiness: 80, growth: 55, stage: "growing", mood: "happy" }
+    ]
+
+    console.log('🌱 Starting to populate database with plants...')
+    
+    for (const plantData of plants) {
+      try {
+        console.log(`🌿 Creating plant: ${plantData.name} (${plantData.mood})`)
+        
+        const plant = await createPlant({ name: plantData.name })
+        if (plant) {
+          await updatePlant(plant.id, {
+            health: plantData.health,
+            happiness: plantData.happiness,
+            growth: plantData.growth,
+            stage: plantData.stage,
+            mood: plantData.mood
+          })
+          console.log(`✅ Created and updated: ${plant.name}`)
+        }
+      } catch (error) {
+        console.error(`❌ Error creating plant ${plantData.name}:`, error)
+      }
+    }
+    
+    console.log('🎉 Finished populating database!')
+    alert('Database populated with 8 plants of different moods!')
+  }
+
   return (
     <div className="bg-white/60 backdrop-blur-sm rounded-2xl shadow-lg p-6">
       <div className="flex items-center justify-between mb-6">
@@ -84,6 +122,13 @@ export default function PlantManager({
           <h3 className="text-lg font-semibold text-gray-900">Plant Manager</h3>
         </div>
         <div className="flex items-center space-x-2">
+          <button
+            onClick={populateDatabase}
+            className="flex items-center space-x-2 px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors duration-200"
+          >
+            <Users className="w-4 h-4" />
+            <span>Populate DB</span>
+          </button>
           <button
             onClick={() => setIsCreating(true)}
             className="flex items-center space-x-2 px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors duration-200"
