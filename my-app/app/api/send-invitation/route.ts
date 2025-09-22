@@ -11,10 +11,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // For testing with Resend, we can only send to the verified email address
-    // In production, you would verify your own domain
-    const testEmail = 'takekuni@tanemori.org'
-    console.log(`Sending test email to ${testEmail} instead of ${email}`)
+    // Send email to the actual invited user
+    console.log(`Sending invitation email to ${email}`)
 
 
     // Use fetch to call Resend API directly
@@ -26,7 +24,7 @@ export async function POST(request: NextRequest) {
       },
       body: JSON.stringify({
         from: 'GrowTogether <delivered@resend.dev>',
-        to: [testEmail],
+        to: [email],
         subject: `🌱 You're invited to be a Bloom Buddy for ${plantName}!`,
         html: `
           <!DOCTYPE html>
@@ -231,7 +229,7 @@ export async function POST(request: NextRequest) {
       { 
         success: true, 
         messageId: data?.id,
-        message: `Invitation email sent successfully to ${testEmail}! (Test mode - in production this would go to ${email})` 
+        message: `Invitation email sent successfully to ${email}!` 
       },
       { status: 200 }
     )
